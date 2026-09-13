@@ -384,7 +384,7 @@ int chooseIngredient(struct Ingredient *list, int count, int isTopping, int budg
         return 0;
     }
 
-    /* milk + pineapple warning */
+    
     if (skipMilkWarning == 0 && hasMilk() == 1) {
         if (strstr(list[choice].name, "ineapple") != NULL) {
             printf("  Are you sure? This may create stomach problems!\n");
@@ -398,7 +398,6 @@ int chooseIngredient(struct Ingredient *list, int count, int isTopping, int budg
         }
     }
 
-    /* espresso + instant coffee warning */
     if (hasEspresso() == 1 && hasInstantCoffee() == 0) {
         if (strstr(list[choice].name, "Instant") != NULL) {
             printf("  Wow, can you handle the bitterness?\n");
@@ -412,7 +411,6 @@ int chooseIngredient(struct Ingredient *list, int count, int isTopping, int budg
         }
     }
 
-    /* instant coffee + espresso warning */
     if (hasInstantCoffee() == 1 && hasEspresso() == 0) {
         if (strstr(list[choice].name, "spresso") != NULL) {
             printf("  Wow, can you handle the bitterness?\n");
@@ -795,7 +793,6 @@ void showCustomMenu(void) {
                     continue;
                 }
 
-                /* milk + pineapple warning */
                 if (hasMilk() == 1) {
                     if (strstr(ch->name, "ineapple") != NULL) {
                         printf("  Are you sure? This may create stomach problems!\n");
@@ -943,42 +940,36 @@ void showCustomMenu(void) {
 
 int main(void) {
 
-    /* this still fills in all your ingredient/menu data, exactly like before */
+    
     initData();
 
-    /* open one pastel window, 700 dots wide, 500 dots tall */
+    
     InitWindow(700, 500, "Tap Tap Coffee");
 
-    /* redraw the screen 60 times a second so hovering/clicking feels smooth */
     SetTargetFPS(60);
 
-    /* --- all our pastel paint colors, mixed once so we don't repeat numbers --- */
-    Color bgColor      = (Color){255, 240, 245, 255}; /* soft pink page      */
-    Color titleColor   = (Color){150, 90, 100, 255};  /* deeper pink text    */
-    Color textColor    = (Color){90, 70, 70, 255};    /* soft brown text     */
-    Color btnNormal    = (Color){255, 214, 224, 255}; /* pastel pink button  */
-    Color btnCustom    = (Color){214, 234, 255, 255}; /* pastel blue button  */
-    Color btnExit      = (Color){235, 235, 235, 255}; /* pastel grey button  */
-    Color btnHover     = (Color){255, 182, 193, 255}; /* brighter pink glow  */
-    Color btnBorder    = (Color){200, 160, 170, 255}; /* soft outline color  */
+    
+    Color bgColor      = (Color){255, 240, 245, 255}; // soft pink page      
+    Color titleColor   = (Color){150, 90, 100, 255};  //deeper pink text    
+    Color textColor    = (Color){90, 70, 70, 255};    // soft brown text     
+    Color btnNormal    = (Color){255, 214, 224, 255}; //pastel pink button  
+    Color btnCustom    = (Color){214, 234, 255, 255}; // pastel blue button 
+    Color btnExit      = (Color){235, 235, 235, 255}; // pastel grey button  
+    Color btnHover     = (Color){255, 182, 193, 255}; // brighter pink glow  
+    Color btnBorder    = (Color){200, 160, 170, 255}; // soft outline color  
 
-    /* --- the 3 clickable boxes: {x, y, width, height} --- */
     Rectangle normalBtn = {200, 190, 300, 60};
     Rectangle customBtn = {200, 270, 300, 60};
     Rectangle exitBtn   = {200, 350, 300, 60};
 
-    /* keep looping and redrawing until the window is closed */
     while (!WindowShouldClose()) {
 
-        /* find out where the mouse pointer is right now, this frame */
         Vector2 mouse = GetMousePosition();
 
-        /* is the mouse sitting on top of each button right now? */
         int overNormal = CheckCollisionPointRec(mouse, normalBtn);
         int overCustom = CheckCollisionPointRec(mouse, customBtn);
         int overExit   = CheckCollisionPointRec(mouse, exitBtn);
 
-        /* --- start drawing this frame --- */
         BeginDrawing();
         ClearBackground(bgColor);
 
@@ -986,7 +977,6 @@ int main(void) {
         DrawText("Your cute drink corner!", 220, 100, 18, textColor);
         DrawText("Pick your adventure:", 240, 150, 20, textColor);
 
-        /* draw each button: brighter pink if the mouse is hovering it, normal color otherwise */
         DrawRectangleRec(normalBtn, overNormal ? btnHover : btnNormal);
         DrawRectangleLinesEx(normalBtn, 2, btnBorder);
         DrawText("1. Normal Menu", 230, 210, 20, textColor);
@@ -999,15 +989,12 @@ int main(void) {
         DrawRectangleLinesEx(exitBtn, 2, btnBorder);
         DrawText("3. Exit", 230, 370, 20, textColor);
 
-        /* --- finish drawing this frame, show it on screen --- */
         EndDrawing();
 
-        /* only react to a click AFTER EndDrawing, so this frame finishes drawing first */
+        
         if (overNormal && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            /* close the graphics window so the console/terminal can take input */
             CloseWindow();
             showNormalMenu();
-            /* your old function is done, so open the pastel window again */
             InitWindow(700, 500, "Tap Tap Coffee");
             SetTargetFPS(60);
         }
@@ -1020,12 +1007,10 @@ int main(void) {
         }
 
         if (overExit && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            /* stop the while loop, which lets us fall through to CloseWindow below */
             break;
         }
     }
 
-    /* close the pastel window and clean everything up before quitting */
     CloseWindow();
 
     return 0;
