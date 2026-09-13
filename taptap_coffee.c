@@ -342,13 +342,16 @@ void DrawPixelFill(Rectangle r, Color colorA, Color colorB, int pixelSize) {
     }
 }
 
-void DrawMCButton(Rectangle r, const char *label, int hovered, int fontSize) {
+void DrawTextExBold(Font font, const char *text, Vector2 pos, float fontSize, float spacing, Color color) {
+    DrawTextEx(font, text, (Vector2){pos.x + 1, pos.y}, fontSize, spacing, color);
+    DrawTextEx(font, text, (Vector2){pos.x, pos.y + 1}, fontSize, spacing, color);
+    DrawTextEx(font, text, (Vector2){pos.x + 1, pos.y + 1}, fontSize, spacing, color);
+    DrawTextEx(font, text, pos, fontSize, spacing, color);
+}
+
+void DrawMCButtonBase(Rectangle r, int hovered) {
     Color colorA = hovered ? mcHoverA : mcBaseA;
     Color colorB = hovered ? mcHoverB : mcBaseB;
-    Color txt = hovered ? mcTextHover : mcTextNormal;
-    Vector2 sz = MeasureTextEx(customFont, label, (float)fontSize, 1);
-    float tx = r.x + (r.width - sz.x) / 2;
-    float ty = r.y + (r.height - sz.y) / 2;
 
     DrawPixelFill(r, colorA, colorB, 6);
     DrawLine((int)r.x, (int)r.y, (int)(r.x + r.width), (int)r.y, mcHighlight);
@@ -356,9 +359,23 @@ void DrawMCButton(Rectangle r, const char *label, int hovered, int fontSize) {
     DrawLine((int)(r.x + r.width), (int)r.y, (int)(r.x + r.width), (int)(r.y + r.height), mcShadowLine);
     DrawLine((int)r.x, (int)(r.y + r.height), (int)(r.x + r.width), (int)(r.y + r.height), mcShadowLine);
     DrawRectangleLinesEx(r, 3, mcBorderDark);
+}
 
-    DrawTextEx(customFont, label, (Vector2){tx + 2, ty + 2}, (float)fontSize, 1, mcTextShadow);
-    DrawTextEx(customFont, label, (Vector2){tx, ty}, (float)fontSize, 1, txt);
+void DrawMCButtonDisabledBase(Rectangle r) {
+    DrawPixelFill(r, mcDisabledA, mcDisabledB, 6);
+    DrawRectangleLinesEx(r, 3, mcBorderDark);
+}
+
+void DrawMCButton(Rectangle r, const char *label, int hovered, int fontSize) {
+    Color txt = hovered ? mcTextHover : mcTextNormal;
+    Vector2 sz = MeasureTextEx(customFont, label, (float)fontSize, 1);
+    float tx = r.x + (r.width - sz.x) / 2;
+    float ty = r.y + (r.height - sz.y) / 2;
+
+    DrawMCButtonBase(r, hovered);
+
+    DrawTextExBold(customFont, label, (Vector2){tx + 2, ty + 2}, (float)fontSize, 1, mcTextShadow);
+    DrawTextExBold(customFont, label, (Vector2){tx, ty}, (float)fontSize, 1, txt);
 }
 
 void DrawMCButtonDisabled(Rectangle r, const char *label, int fontSize) {
@@ -366,12 +383,54 @@ void DrawMCButtonDisabled(Rectangle r, const char *label, int fontSize) {
     float tx = r.x + (r.width - sz.x) / 2;
     float ty = r.y + (r.height - sz.y) / 2;
 
-    DrawPixelFill(r, mcDisabledA, mcDisabledB, 6);
-    DrawRectangleLinesEx(r, 3, mcBorderDark);
-    DrawTextEx(customFont, label, (Vector2){tx, ty}, (float)fontSize, 1, mcTextDisabled);
+    DrawMCButtonDisabledBase(r);
+    DrawTextExBold(customFont, label, (Vector2){tx, ty}, (float)fontSize, 1, mcTextDisabled);
 }
 
-void DrawCupVisual(int cx, int topY, int height, float fillFraction) {
+Color GetIngredientColor(const char *name) {
+    if (strstr(name, "Espresso") != NULL) return (Color){60, 40, 30, 255};
+    if (strstr(name, "Coconut Jelly") != NULL) return (Color){235, 240, 236, 255};
+    if (strstr(name, "Coffee Jelly") != NULL) return (Color){130, 90, 60, 255};
+    if (strstr(name, "Boba") != NULL) return (Color){20, 20, 20, 255};
+    if (strstr(name, "Basil Seed") != NULL) return (Color){15, 15, 15, 255};
+    if (strstr(name, "Instant Coffee") != NULL) return (Color){110, 75, 45, 255};
+    if (strstr(name, "Dark Chocolate") != NULL) return (Color){70, 40, 25, 255};
+    if (strstr(name, "Crushed Ice Strawberry") != NULL) return (Color){250, 190, 205, 255};
+    if (strstr(name, "Ice") != NULL) return (Color){225, 245, 250, 255};
+    if (strstr(name, "Chopped Banana") != NULL) return (Color){250, 230, 150, 255};
+    if (strstr(name, "Chopped Mango") != NULL) return (Color){255, 175, 60, 255};
+    if (strstr(name, "Chopped Apple") != NULL) return (Color){200, 70, 60, 255};
+    if (strstr(name, "Chocolate Syrup") != NULL) return (Color){90, 55, 35, 255};
+    if (strstr(name, "Strawberry Syrup") != NULL) return (Color){210, 50, 80, 255};
+    if (strstr(name, "Strawberry Jam") != NULL) return (Color){200, 40, 70, 255};
+    if (strstr(name, "Mint") != NULL) return (Color){110, 180, 110, 255};
+    if (strstr(name, "Blueberry") != NULL) return (Color){95, 78, 150, 255};
+    if (strstr(name, "Pineapple") != NULL) return (Color){255, 205, 80, 255};
+    if (strstr(name, "Papaya") != NULL) return (Color){255, 150, 80, 255};
+    if (strstr(name, "Mango") != NULL) return (Color){255, 175, 60, 255};
+    if (strstr(name, "Banana") != NULL) return (Color){250, 225, 140, 255};
+    if (strstr(name, "Apple Juice") != NULL) return (Color){225, 215, 110, 255};
+    if (strstr(name, "Sugarcane") != NULL) return (Color){220, 230, 150, 255};
+    if (strstr(name, "Lemonade") != NULL) return (Color){255, 235, 140, 255};
+    if (strstr(name, "Coconut Water") != NULL) return (Color){236, 236, 228, 255};
+    if (strstr(name, "Chilled Water") != NULL) return (Color){215, 238, 250, 255};
+    if (strstr(name, "Milk") != NULL) return (Color){248, 244, 230, 255};
+    return (Color){210, 210, 210, 255};
+}
+
+int GetIngredientTexture(const char *name) {
+    if (strstr(name, "Boba") != NULL) return 1;
+    if (strstr(name, "Ice") != NULL) return 2;
+    if (strstr(name, "Coconut Jelly") != NULL) return 3;
+    if (strstr(name, "Coffee Jelly") != NULL) return 3;
+    if (strstr(name, "Dark Chocolate") != NULL) return 4;
+    if (strstr(name, "Instant Coffee") != NULL) return 4;
+    if (strstr(name, "Basil Seed") != NULL) return 4;
+    if (strstr(name, "Chopped") != NULL) return 5;
+    return 0;
+}
+
+void DrawCupVisual(int cx, int topY, int height, int cupMl) {
     int topWidth = 220;
     int bottomWidth = 150;
     int sliceH = 6;
@@ -379,23 +438,55 @@ void DrawCupVisual(int cx, int topY, int height, float fillFraction) {
     int i;
     Color cupColorA = (Color){235, 242, 252, 255};
     Color cupColorB = (Color){222, 232, 248, 255};
-    Color liquidColorA = (Color){225, 190, 160, 255};
-    Color liquidColorB = (Color){210, 175, 145, 255};
     Color outline = mcBorderDark;
+    float fillFraction = (cupMl > 0) ? ((float)totalMl() / (float)cupMl) : 0;
     float liquidTopFrac;
+    Color blend = (Color){225, 190, 160, 255};
 
     if (fillFraction < 0) fillFraction = 0;
     if (fillFraction > 1) fillFraction = 1;
     liquidTopFrac = 1.0f - fillFraction;
+
+    if (cartSize > 0) {
+        long rSum = 0, gSum = 0, bSum = 0;
+        int wSum = 0;
+        for (i = 0; i < cartSize; i++) {
+            char *n;
+            int ml;
+            Color c;
+            if (cart[i].isTopping) {
+                n = toppingIngredients[cart[i].index].name;
+                ml = toppingIngredients[cart[i].index].ml * cart[i].portions;
+            } else {
+                n = baseIngredients[cart[i].index].name;
+                ml = baseIngredients[cart[i].index].ml * cart[i].portions;
+            }
+            c = GetIngredientColor(n);
+            rSum = rSum + (long)c.r * ml;
+            gSum = gSum + (long)c.g * ml;
+            bSum = bSum + (long)c.b * ml;
+            wSum = wSum + ml;
+        }
+        if (wSum > 0) {
+            blend.r = (unsigned char)(rSum / wSum);
+            blend.g = (unsigned char)(gSum / wSum);
+            blend.b = (unsigned char)(bSum / wSum);
+            blend.a = 255;
+        }
+    }
 
     for (i = 0; i < numSlices; i++) {
         float frac = (float)i / (numSlices - 1);
         int w = (int)(topWidth + (bottomWidth - topWidth) * frac);
         int y = topY + i * sliceH;
         int isLiquid = frac >= liquidTopFrac;
-        Color a = isLiquid ? liquidColorA : cupColorA;
-        Color b = isLiquid ? liquidColorB : cupColorB;
-        Color c = ((i / 2) % 2 == 0) ? a : b;
+        Color c;
+        if (isLiquid) {
+            Color darker = { (unsigned char)(blend.r * 0.88f), (unsigned char)(blend.g * 0.88f), (unsigned char)(blend.b * 0.88f), 255 };
+            c = ((i / 2) % 2 == 0) ? blend : darker;
+        } else {
+            c = ((i / 2) % 2 == 0) ? cupColorA : cupColorB;
+        }
         DrawRectangle(cx - w / 2, y, w, sliceH + 1, c);
     }
 
@@ -623,7 +714,7 @@ void showNormalMenu(void) {
                 if (kbRow >= leftLen) kbRow = leftLen - 1;
             }
 
-            DrawTextEx(customFont, "Normal Menu - pick a drink", (Vector2){20, 15}, 41, 1, titleColor);
+            DrawTextExBold(customFont, "Normal Menu - pick a drink", (Vector2){20, 15}, 41, 1, titleColor);
 
             for (i = 0; i < 10; i++) {
                 Rectangle row = {20, 65 + i * 48, 620, 44};
@@ -633,7 +724,7 @@ void showNormalMenu(void) {
                 hoveredRow = mouseOverRow || (kbCol == 0 && kbRow == i);
 
                 sprintf(label, "%-28s %d Tk", normalMenu[i].name, normalMenu[i].price);
-                DrawMCButton(row, label, hoveredRow, 29);
+                DrawMCButton(row, label, hoveredRow, 35);
 
                 if ((mouseOverRow && clicked) || (kbCol == 0 && kbRow == i && enterPressed)) {
                     int found = 0;
@@ -652,7 +743,7 @@ void showNormalMenu(void) {
                 }
             }
 
-            DrawTextEx(customFont, "Your Cart:", (Vector2){680, 15}, 36, 1, titleColor);
+            DrawTextExBold(customFont, "Your Cart:", (Vector2){680, 15}, 36, 1, titleColor);
             total = 0;
 
             for (i = 0; i < cartNCount; i++) {
@@ -666,9 +757,9 @@ void showNormalMenu(void) {
                 total = total + sub;
 
                 sprintf(line, "%dx %s = %d Tk", cartNormal[i].qty, normalMenu[id].name, sub);
-                DrawTextEx(customFont, line, (Vector2){680, 60 + i * 36}, 22, 1, textColor);
+                DrawTextExBold(customFont, line, (Vector2){680, 60 + i * 36}, 22, 1, textColor);
 
-                DrawMCButton(minusBtn, "-", hoveredMinus, 26);
+                DrawMCButton(minusBtn, "-", hoveredMinus, 31);
 
                 if ((mouseOverMinus && clicked) || (kbCol == 1 && kbRow == i && enterPressed)) {
                     cartNormal[i].qty = cartNormal[i].qty - 1;
@@ -693,10 +784,10 @@ void showNormalMenu(void) {
                 int hoveredBack = mouseOverBack || (kbCol == 1 && kbRow == backRow);
 
                 sprintf(totalLine, "Total: %d Tk", total);
-                DrawTextEx(customFont, totalLine, (Vector2){680, 500}, 34, 1, titleColor);
+                DrawTextExBold(customFont, totalLine, (Vector2){680, 500}, 34, 1, titleColor);
 
-                DrawMCButton(checkoutBtn, "Checkout", hoveredCheckout, 31);
-                DrawMCButton(backBtn, "Back to Main Menu", hoveredBack, 24);
+                DrawMCButton(checkoutBtn, "Checkout", hoveredCheckout, 37);
+                DrawMCButton(backBtn, "Back to Main Menu", hoveredBack, 29);
 
                 if (((mouseOverCheckout && clicked) || (kbCol == 1 && kbRow == checkoutRow && enterPressed)) && cartNCount > 0) {
                     screen = 1;
@@ -720,11 +811,11 @@ void showNormalMenu(void) {
             if (downPressed || rightPressed) kbIndex = (kbIndex + 1) % 3;
             if (upPressed || leftPressed) kbIndex = (kbIndex - 1 + 3) % 3;
 
-            DrawTextEx(customFont, "Select payment method", (Vector2){300, 150}, 43, 1, titleColor);
+            DrawTextExBold(customFont, "Select payment method", (Vector2){300, 150}, 43, 1, titleColor);
 
-            DrawMCButton(cashBtn, "Cash", mouseOverCash || kbIndex == 0, 34);
-            DrawMCButton(bkashBtn, "bKash", mouseOverBkash || kbIndex == 1, 34);
-            DrawMCButton(nagadBtn, "Nagad", mouseOverNagad || kbIndex == 2, 34);
+            DrawMCButton(cashBtn, "Cash", mouseOverCash || kbIndex == 0, 41);
+            DrawMCButton(bkashBtn, "bKash", mouseOverBkash || kbIndex == 1, 41);
+            DrawMCButton(nagadBtn, "Nagad", mouseOverNagad || kbIndex == 2, 41);
 
             if ((clicked && mouseOverCash) || (kbIndex == 0 && enterPressed)) {
                 strcpy(payName, "Cash");
@@ -755,15 +846,15 @@ void showNormalMenu(void) {
                 total = total + normalMenu[id].price * cartNormal[i].qty;
             }
 
-            DrawTextEx(customFont, "Yay! Can't wait for the drink! ^_^", (Vector2){190, 210}, 38, 1, titleColor);
+            DrawTextExBold(customFont, "Yay! Can't wait for the drink! ^_^", (Vector2){190, 210}, 38, 1, titleColor);
 
             sprintf(line2, "Payment via %s confirmed.", payName);
-            DrawTextEx(customFont, line2, (Vector2){260, 280}, 31, 1, textColor);
+            DrawTextExBold(customFont, line2, (Vector2){260, 280}, 31, 1, textColor);
 
             sprintf(line3, "Total paid: %d Tk", total);
-            DrawTextEx(customFont, line3, (Vector2){330, 325}, 31, 1, textColor);
+            DrawTextExBold(customFont, line3, (Vector2){330, 325}, 31, 1, textColor);
 
-            DrawMCButton(okBtn, "OK", mouseOverOk || kbIndex == 0, 34);
+            DrawMCButton(okBtn, "OK", mouseOverOk || kbIndex == 0, 41);
 
             if ((mouseOverOk && clicked) || enterPressed) {
                 EndDrawing();
@@ -843,6 +934,7 @@ void showCustomMenu(void) {
             int gridCol = kbIndex % gridCols;
             int isPortions = (screen == 5);
             int maxDigits = isPortions ? 3 : 6;
+            int gx = 338;
 
             if (downPressed) gridRow = (gridRow + 1) % gridRows;
             if (upPressed) gridRow = (gridRow - 1 + gridRows) % gridRows;
@@ -853,23 +945,38 @@ void showCustomMenu(void) {
 
             if (isPortions) {
                 char hd[100];
+                Vector2 hdSize;
                 sprintf(hd, "How many portions of %s?", pendingList[pendingIndex].name);
-                DrawTextEx(customFont, hd, (Vector2){20, 20}, 36, 1, titleColor);
+                hdSize = MeasureTextEx(customFont, hd, 36, 1);
+                DrawTextExBold(customFont, hd, (Vector2){(1050 - hdSize.x) / 2, 20}, 36, 1, titleColor);
             } else {
-                DrawTextEx(customFont, "Hi! What's your budget?", (Vector2){20, 20}, 41, 1, titleColor);
+                const char *hd2 = "Hi! What's your budget?";
+                Vector2 hdSize = MeasureTextEx(customFont, hd2, 41, 1);
+                DrawTextExBold(customFont, hd2, (Vector2){(1050 - hdSize.x) / 2, 20}, 41, 1, titleColor);
             }
 
-            DrawTextEx(customFont, numBuffer[0] ? numBuffer : "0", (Vector2){40, 90}, 67, 1, textColor);
-            if (!isPortions) {
-                DrawTextEx(customFont, "Tk", (Vector2){340, 105}, 38, 1, textColor);
+            {
+                char numDisplay[20];
+                Vector2 numSize;
+                if (numBuffer[0]) {
+                    if (isPortions) {
+                        strcpy(numDisplay, numBuffer);
+                    } else {
+                        sprintf(numDisplay, "%s Tk", numBuffer);
+                    }
+                } else {
+                    strcpy(numDisplay, isPortions ? "0" : "0 Tk");
+                }
+                numSize = MeasureTextEx(customFont, numDisplay, 67, 1);
+                DrawTextExBold(customFont, numDisplay, (Vector2){(1050 - numSize.x) / 2, 90}, 67, 1, textColor);
             }
 
             for (i = 0; i < 9; i++) {
-                Rectangle r = {40 + (i % 3) * 130, 180 + (i / 3) * 95, 115, 82};
+                Rectangle r = {(float)(gx + (i % 3) * 130), 180 + (i / 3) * 95, 115, 82};
                 int mouseOver = CheckCollisionPointRec(mouse, r);
                 int hovered = mouseOver || (kbIndex == i);
                 char label[2] = { (char)('1' + i), '\0' };
-                DrawMCButton(r, label, hovered, 38);
+                DrawMCButton(r, label, hovered, 46);
                 if ((mouseOver && clicked && strlen(numBuffer) < maxDigits) ||
                     (kbIndex == i && enterPressed && strlen(numBuffer) < maxDigits)) {
                     strcat(numBuffer, label);
@@ -877,16 +984,16 @@ void showCustomMenu(void) {
             }
 
             {
-                Rectangle zeroR = {40, 465, 115, 82};
-                Rectangle delR = {170, 465, 115, 82};
-                Rectangle okR = {300, 465, 195, 82};
+                Rectangle zeroR = {(float)gx, 465, 115, 82};
+                Rectangle delR = {(float)(gx + 130), 465, 115, 82};
+                Rectangle okR = {(float)(gx + 260), 465, 195, 82};
                 int mouseOverZero = CheckCollisionPointRec(mouse, zeroR);
                 int mouseOverDel = CheckCollisionPointRec(mouse, delR);
                 int mouseOverOk = CheckCollisionPointRec(mouse, okR);
 
-                DrawMCButton(zeroR, "0", mouseOverZero || kbIndex == 9, 38);
-                DrawMCButton(delR, "Del", mouseOverDel || kbIndex == 10, 31);
-                DrawMCButton(okR, "Confirm", mouseOverOk || kbIndex == 11, 31);
+                DrawMCButton(zeroR, "0", mouseOverZero || kbIndex == 9, 46);
+                DrawMCButton(delR, "Del", mouseOverDel || kbIndex == 10, 37);
+                DrawMCButton(okR, "Confirm", mouseOverOk || kbIndex == 11, 37);
 
                 if (((mouseOverZero && clicked) || (kbIndex == 9 && enterPressed)) && strlen(numBuffer) < maxDigits) {
                     strcat(numBuffer, "0");
@@ -896,9 +1003,9 @@ void showCustomMenu(void) {
                 }
 
                 if (isPortions) {
-                    Rectangle cancelR = {300, 560, 195, 65};
+                    Rectangle cancelR = {(float)(gx + 260), 560, 195, 65};
                     int mouseOverCancel = CheckCollisionPointRec(mouse, cancelR);
-                    DrawMCButton(cancelR, "Cancel", mouseOverCancel, 29);
+                    DrawMCButton(cancelR, "Cancel", mouseOverCancel, 35);
                     if (mouseOverCancel && clicked) {
                         numBuffer[0] = '\0';
                         screen = pendingIsTopping ? 4 : 3;
@@ -980,7 +1087,7 @@ void showCustomMenu(void) {
             if (upPressed || leftPressed) kbIndex = (kbIndex - 1 + 4) % 4;
 
             sprintf(line, "With %d Tk, pick your cup:", budget);
-            DrawTextEx(customFont, line, (Vector2){40, 30}, 41, 1, titleColor);
+            DrawTextExBold(customFont, line, (Vector2){40, 30}, 41, 1, titleColor);
 
             for (i = 0; i < 4; i++) {
                 Rectangle r = {40, 100 + i * 95, 480, 80};
@@ -988,7 +1095,7 @@ void showCustomMenu(void) {
                 int hovered = mouseOver || (kbIndex == i);
                 char lbl[60];
                 sprintf(lbl, "%s (%d ml)", cupSizes[i].name, cupSizes[i].ml);
-                DrawMCButton(r, lbl, hovered, 34);
+                DrawMCButton(r, lbl, hovered, 41);
                 if ((mouseOver && clicked) || (kbIndex == i && enterPressed)) {
                     cupChoice = i + 1;
                     cupMl = cupSizes[i].ml;
@@ -1003,7 +1110,6 @@ void showCustomMenu(void) {
 
             char line1[80];
             char line2[100];
-            float fillFrac = (cupMl > 0) ? ((float)totalMl() / (float)cupMl) : 0;
 
             int btnW = 260;
             int gap = 20;
@@ -1039,18 +1145,11 @@ void showCustomMenu(void) {
                 sprintf(line2, "Budget left: %d Tk | Space left: %d ml", budget - totalPrice(), cupMl - totalMl());
                 s1 = MeasureTextEx(customFont, line1, 27, 1);
                 s2 = MeasureTextEx(customFont, line2, 27, 1);
-                DrawTextEx(customFont, line1, (Vector2){(1050 - s1.x) / 2, 15}, 27, 1, titleColor);
-                DrawTextEx(customFont, line2, (Vector2){(1050 - s2.x) / 2, 48}, 27, 1, titleColor);
+                DrawTextExBold(customFont, line1, (Vector2){(1050 - s1.x) / 2, 15}, 27, 1, titleColor);
+                DrawTextExBold(customFont, line2, (Vector2){(1050 - s2.x) / 2, 48}, 27, 1, titleColor);
 
-                {
-                    const char *cupLabel = "Your cup so far:";
-                    Vector2 s3 = MeasureTextEx(customFont, cupLabel, 30, 1);
-                    DrawTextEx(customFont, cupLabel, (Vector2){(1050 - s3.x) / 2, 85}, 30, 1, titleColor);
-                }
+                DrawCupVisual(350, 220, 240, cupMl);
 
-                DrawCupVisual(350, 220, 240, fillFrac);
-
-                DrawTextEx(customFont, "In your cup:", (Vector2){650, 130}, 26, 1, titleColor);
                 for (i = 0; i < cartSize; i++) {
                     char nline[100];
                     char *n;
@@ -1066,14 +1165,14 @@ void showCustomMenu(void) {
                         ml = baseIngredients[cart[i].index].ml * cart[i].portions;
                     }
                     sprintf(nline, "x%d %s  %dml %dTk", cart[i].portions, n, ml, p);
-                    DrawTextEx(customFont, nline, (Vector2){650, 165 + i * 26}, 18, 1, textColor);
+                    DrawTextExBold(customFont, nline, (Vector2){650, 135 + i * 26}, 18, 1, textColor);
                 }
 
-                DrawMCButton(addBaseBtn, "Add Base", hoveredAddBase, 26);
-                DrawMCButton(addTopBtn, "Add Toppings", hoveredAddTop, 26);
-                DrawMCButton(undoBtn, "Undo Last", hoveredUndo, 26);
-                DrawMCButton(doneBtn, "Checkout", hoveredDone, 26);
-                DrawMCButton(cancelBtn, "Cancel", hoveredCancel, 26);
+                DrawMCButton(addBaseBtn, "Add Base", hoveredAddBase, 31);
+                DrawMCButton(addTopBtn, "Add Toppings", hoveredAddTop, 31);
+                DrawMCButton(undoBtn, "Undo Last", hoveredUndo, 31);
+                DrawMCButton(doneBtn, "Checkout", hoveredDone, 31);
+                DrawMCButton(cancelBtn, "Cancel", hoveredCancel, 31);
 
                 if ((mouseOverAddBase && clicked) || (kbRow == 0 && kbCol == 0 && enterPressed)) {
                     pendingList = baseIngredients;
@@ -1185,10 +1284,13 @@ void showCustomMenu(void) {
             }
 
             sprintf(hd, "%s - Space:%dml Budget:%dTk", isTop ? "Toppings" : "Base Ingredients", remaining, remainingBudget);
-            DrawTextEx(customFont, hd, (Vector2){20, 15}, 31, 1, titleColor);
+            {
+                Vector2 hdSize = MeasureTextEx(customFont, hd, 31, 1);
+                DrawTextExBold(customFont, hd, (Vector2){(1050 - hdSize.x) / 2, 15}, 31, 1, titleColor);
+            }
 
             for (i = listStart; i < listEnd; i++) {
-                Rectangle r = {20, 60 + (i - listStart) * 46, 700, 40};
+                Rectangle r = {80, 60 + (i - listStart) * 46, 700, 40};
                 int mouseOver = CheckCollisionPointRec(mouse, r);
                 int slotIdx = i - listStart;
                 int hovered = mouseOver || (kbCol == 0 && kbRow == slotIdx);
@@ -1197,9 +1299,9 @@ void showCustomMenu(void) {
                 sprintf(lbl, "%s  %d Tk  %d ml", list[i].name, list[i].price, list[i].ml);
 
                 if (afford) {
-                    DrawMCButton(r, lbl, hovered, 24);
+                    DrawMCButton(r, lbl, hovered, 29);
                 } else {
-                    DrawMCButtonDisabled(r, lbl, 24);
+                    DrawMCButtonDisabled(r, lbl, 29);
                 }
 
                 if (afford && ((mouseOver && clicked) || (kbCol == 0 && kbRow == slotIdx && enterPressed))) {
@@ -1213,13 +1315,13 @@ void showCustomMenu(void) {
             }
 
             if (isTop) {
-                Rectangle prevBtn = {740, 60, 130, 50};
-                Rectangle nextBtn = {740, 120, 130, 50};
+                Rectangle prevBtn = {800, 60, 130, 50};
+                Rectangle nextBtn = {800, 120, 130, 50};
                 int mouseOverPrev = CheckCollisionPointRec(mouse, prevBtn);
                 int mouseOverNext = CheckCollisionPointRec(mouse, nextBtn);
 
-                DrawMCButton(prevBtn, "Prev", mouseOverPrev || (kbCol == 1 && kbRow == 0), 24);
-                DrawMCButton(nextBtn, "Next", mouseOverNext || (kbCol == 1 && kbRow == 1), 24);
+                DrawMCButton(prevBtn, "Prev", mouseOverPrev || (kbCol == 1 && kbRow == 0), 29);
+                DrawMCButton(nextBtn, "Next", mouseOverNext || (kbCol == 1 && kbRow == 1), 29);
 
                 if ((mouseOverPrev && clicked) || (kbCol == 1 && kbRow == 0 && enterPressed)) {
                     toppingPage = 0;
@@ -1232,10 +1334,10 @@ void showCustomMenu(void) {
             }
 
             {
-                Rectangle backBtn = {740, 590, 170, 60};
+                Rectangle backBtn = {800, 590, 170, 60};
                 int mouseOverBack = CheckCollisionPointRec(mouse, backBtn);
                 int backRow = sideLen - 1;
-                DrawMCButton(backBtn, "Back", mouseOverBack || (kbCol == 1 && kbRow == backRow), 26);
+                DrawMCButton(backBtn, "Back", mouseOverBack || (kbCol == 1 && kbRow == backRow), 31);
                 if ((mouseOverBack && clicked) || (kbCol == 1 && kbRow == backRow && enterPressed)) {
                     screen = 2;
                     kbIndex = 0;
@@ -1262,11 +1364,11 @@ void showCustomMenu(void) {
             }
             {
                 Vector2 msgSize = MeasureTextEx(customFont, msg, 40, 1);
-                DrawTextEx(customFont, msg, (Vector2){(1050 - msgSize.x) / 2, 200}, 40, 1, titleColor);
+                DrawTextExBold(customFont, msg, (Vector2){(1050 - msgSize.x) / 2, 200}, 40, 1, titleColor);
             }
 
-            DrawMCButton(yesBtn, warningType == 1 ? "Proceed anyway" : "Yes, I can!", mouseOverYes || kbIndex == 0, 26);
-            DrawMCButton(noBtn, warningType == 1 ? "Cancel" : "No, cancel", mouseOverNo || kbIndex == 1, 26);
+            DrawMCButton(yesBtn, warningType == 1 ? "Proceed anyway" : "Yes, I can!", mouseOverYes || kbIndex == 0, 31);
+            DrawMCButton(noBtn, warningType == 1 ? "Cancel" : "No, cancel", mouseOverNo || kbIndex == 1, 31);
 
             if ((mouseOverYes && clicked) || (kbIndex == 0 && enterPressed)) {
                 int merged = 0;
@@ -1308,11 +1410,11 @@ void showCustomMenu(void) {
             {
                 const char *msg = "Are you sure? Everything will be lost.";
                 Vector2 msgSize = MeasureTextEx(customFont, msg, 40, 1);
-                DrawTextEx(customFont, msg, (Vector2){(1050 - msgSize.x) / 2, 250}, 40, 1, titleColor);
+                DrawTextExBold(customFont, msg, (Vector2){(1050 - msgSize.x) / 2, 250}, 40, 1, titleColor);
             }
 
-            DrawMCButton(yesBtn, "Yes, go back", mouseOverYes || kbIndex == 0, 26);
-            DrawMCButton(noBtn, "No, stay", mouseOverNo || kbIndex == 1, 26);
+            DrawMCButton(yesBtn, "Yes, go back", mouseOverYes || kbIndex == 0, 31);
+            DrawMCButton(noBtn, "No, stay", mouseOverNo || kbIndex == 1, 31);
 
             if ((mouseOverYes && clicked) || (kbIndex == 0 && enterPressed)) {
                 EndDrawing();
@@ -1337,11 +1439,11 @@ void showCustomMenu(void) {
             if (downPressed || rightPressed) kbIndex = (kbIndex + 1) % 3;
             if (upPressed || leftPressed) kbIndex = (kbIndex - 1 + 3) % 3;
 
-            DrawTextEx(customFont, "Select payment method", (Vector2){300, 150}, 43, 1, titleColor);
+            DrawTextExBold(customFont, "Select payment method", (Vector2){300, 150}, 43, 1, titleColor);
 
-            DrawMCButton(cashBtn, "Cash", mouseOverCash || kbIndex == 0, 34);
-            DrawMCButton(bkashBtn, "bKash", mouseOverBkash || kbIndex == 1, 34);
-            DrawMCButton(nagadBtn, "Nagad", mouseOverNagad || kbIndex == 2, 34);
+            DrawMCButton(cashBtn, "Cash", mouseOverCash || kbIndex == 0, 41);
+            DrawMCButton(bkashBtn, "bKash", mouseOverBkash || kbIndex == 1, 41);
+            DrawMCButton(nagadBtn, "Nagad", mouseOverNagad || kbIndex == 2, 41);
 
             if ((clicked && mouseOverCash) || (kbIndex == 0 && enterPressed)) {
                 strcpy(payName, "Cash");
@@ -1367,15 +1469,15 @@ void showCustomMenu(void) {
             Rectangle okBtn = {400, 480, 220, 75};
             int mouseOverOk = CheckCollisionPointRec(mouse, okBtn);
 
-            DrawTextEx(customFont, "Yay! Can't wait for the drink! ^_^", (Vector2){170, 200}, 38, 1, titleColor);
+            DrawTextExBold(customFont, "Yay! Can't wait for the drink! ^_^", (Vector2){170, 200}, 38, 1, titleColor);
             sprintf(line1, "Cup: %s (%d ml)", cupSizes[cupChoice - 1].name, cupMl);
-            DrawTextEx(customFont, line1, (Vector2){260, 265}, 26, 1, textColor);
+            DrawTextExBold(customFont, line1, (Vector2){260, 265}, 26, 1, textColor);
             sprintf(line2, "Payment via %s confirmed.", payName);
-            DrawTextEx(customFont, line2, (Vector2){260, 300}, 29, 1, textColor);
+            DrawTextExBold(customFont, line2, (Vector2){260, 300}, 29, 1, textColor);
             sprintf(line3, "Total paid: %d Tk", totalPrice());
-            DrawTextEx(customFont, line3, (Vector2){330, 340}, 29, 1, textColor);
+            DrawTextExBold(customFont, line3, (Vector2){330, 340}, 29, 1, textColor);
 
-            DrawMCButton(okBtn, "OK", mouseOverOk || kbIndex == 0, 34);
+            DrawMCButton(okBtn, "OK", mouseOverOk || kbIndex == 0, 41);
             if ((mouseOverOk && clicked) || enterPressed) {
                 EndDrawing();
                 return;
@@ -1438,14 +1540,14 @@ int main(void) {
             Vector2 s2 = MeasureTextEx(customFont, line2, 34, 1);
             Vector2 s3 = MeasureTextEx(customFont, line3, 36, 1);
 
-            DrawTextEx(customFont, line1, (Vector2){(1050 - s1.x) / 2, 90}, 62, 1, titleColor);
-            DrawTextEx(customFont, line2, (Vector2){(1050 - s2.x) / 2, 90 + s1.y + 6}, 34, 1, textColor);
-            DrawTextEx(customFont, line3, (Vector2){(1050 - s3.x) / 2, 90 + s1.y + 6 + s2.y + 4}, 36, 1, textColor);
+            DrawTextExBold(customFont, line1, (Vector2){(1050 - s1.x) / 2, 90}, 62, 1, titleColor);
+            DrawTextExBold(customFont, line2, (Vector2){(1050 - s2.x) / 2, 90 + s1.y + 6}, 34, 1, textColor);
+            DrawTextExBold(customFont, line3, (Vector2){(1050 - s3.x) / 2, 90 + s1.y + 6 + s2.y + 4}, 36, 1, textColor);
         }
 
-        DrawMCButton(normalBtn, "1. Normal Menu", mouseOverNormal || kbIndex == 0, 38);
-        DrawMCButton(customBtn, "2. Custom Menu", mouseOverCustom || kbIndex == 1, 38);
-        DrawMCButton(exitBtn, "3. Exit", mouseOverExit || kbIndex == 2, 38);
+        DrawMCButton(normalBtn, "1. Normal Menu", mouseOverNormal || kbIndex == 0, 46);
+        DrawMCButton(customBtn, "2. Custom Menu", mouseOverCustom || kbIndex == 1, 46);
+        DrawMCButton(exitBtn, "3. Exit", mouseOverExit || kbIndex == 2, 46);
 
         EndDrawing();
 
