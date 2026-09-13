@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "raylib.h"
 
 #define MAX_INGREDIENTS  50
 #define MAX_NORMAL_ITEMS 10
@@ -941,42 +942,91 @@ void showCustomMenu(void) {
 }
 
 int main(void) {
-    int choice;
 
+    /* this still fills in all your ingredient/menu data, exactly like before */
     initData();
 
-    while (1) {
+    /* open one pastel window, 700 dots wide, 500 dots tall */
+    InitWindow(700, 500, "Tap Tap Coffee");
 
-        printf("\n  ================================\n");
-        printf("    ~*~ TAP TAP COFFEE ~*~\n");
-        printf("    Your cute drink corner!\n");
-        printf("  ================================\n\n");
-        printf("  Welcome to Tap Tap Coffee!\n");
-        printf("  Pick your adventure:\n\n");
-        printf("    1. Normal Menu  - Choose from our lovely drinks\n");
-        printf("    2. Custom Menu  - Create your own adorable drink!\n");
-        printf("    3. Exit\n\n  Choice: ");
-        scanf("%d", &choice);
+    /* redraw the screen 60 times a second so hovering/clicking feels smooth */
+    SetTargetFPS(60);
 
-        if (choice == 1) {
+    /* --- all our pastel paint colors, mixed once so we don't repeat numbers --- */
+    Color bgColor      = (Color){255, 240, 245, 255}; /* soft pink page      */
+    Color titleColor   = (Color){150, 90, 100, 255};  /* deeper pink text    */
+    Color textColor    = (Color){90, 70, 70, 255};    /* soft brown text     */
+    Color btnNormal    = (Color){255, 214, 224, 255}; /* pastel pink button  */
+    Color btnCustom    = (Color){214, 234, 255, 255}; /* pastel blue button  */
+    Color btnExit      = (Color){235, 235, 235, 255}; /* pastel grey button  */
+    Color btnHover     = (Color){255, 182, 193, 255}; /* brighter pink glow  */
+    Color btnBorder    = (Color){200, 160, 170, 255}; /* soft outline color  */
+
+    /* --- the 3 clickable boxes: {x, y, width, height} --- */
+    Rectangle normalBtn = {200, 190, 300, 60};
+    Rectangle customBtn = {200, 270, 300, 60};
+    Rectangle exitBtn   = {200, 350, 300, 60};
+
+    /* keep looping and redrawing until the window is closed */
+    while (!WindowShouldClose()) {
+
+        /* find out where the mouse pointer is right now, this frame */
+        Vector2 mouse = GetMousePosition();
+
+        /* is the mouse sitting on top of each button right now? */
+        int overNormal = CheckCollisionPointRec(mouse, normalBtn);
+        int overCustom = CheckCollisionPointRec(mouse, customBtn);
+        int overExit   = CheckCollisionPointRec(mouse, exitBtn);
+
+        /* --- start drawing this frame --- */
+        BeginDrawing();
+        ClearBackground(bgColor);
+
+        DrawText("~*~ TAP TAP COFFEE ~*~", 190, 60, 30, titleColor);
+        DrawText("Your cute drink corner!", 220, 100, 18, textColor);
+        DrawText("Pick your adventure:", 240, 150, 20, textColor);
+
+        /* draw each button: brighter pink if the mouse is hovering it, normal color otherwise */
+        DrawRectangleRec(normalBtn, overNormal ? btnHover : btnNormal);
+        DrawRectangleLinesEx(normalBtn, 2, btnBorder);
+        DrawText("1. Normal Menu", 230, 210, 20, textColor);
+
+        DrawRectangleRec(customBtn, overCustom ? btnHover : btnCustom);
+        DrawRectangleLinesEx(customBtn, 2, btnBorder);
+        DrawText("2. Custom Menu", 230, 290, 20, textColor);
+
+        DrawRectangleRec(exitBtn, overExit ? btnHover : btnExit);
+        DrawRectangleLinesEx(exitBtn, 2, btnBorder);
+        DrawText("3. Exit", 230, 370, 20, textColor);
+
+        /* --- finish drawing this frame, show it on screen --- */
+        EndDrawing();
+
+        /* only react to a click AFTER EndDrawing, so this frame finishes drawing first */
+        if (overNormal && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            /* close the graphics window so the console/terminal can take input */
+            CloseWindow();
             showNormalMenu();
+            /* your old function is done, so open the pastel window again */
+            InitWindow(700, 500, "Tap Tap Coffee");
+            SetTargetFPS(60);
         }
 
-        if (choice == 2) {
+        if (overCustom && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            CloseWindow();
             showCustomMenu();
+            InitWindow(700, 500, "Tap Tap Coffee");
+            SetTargetFPS(60);
         }
 
-        if (choice == 3) {
-    
-            printf("\n  Bye-bye! Come back soon for more yummy drinks!\n\n");
-            return 0;
-        }
-
-        if (choice != 1 && choice != 2 && choice != 3) {
-            printf("  Invalid choice!\n");
-            pauseAnyKey();
+        if (overExit && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            /* stop the while loop, which lets us fall through to CloseWindow below */
+            break;
         }
     }
+
+    /* close the pastel window and clean everything up before quitting */
+    CloseWindow();
 
     return 0;
 }
