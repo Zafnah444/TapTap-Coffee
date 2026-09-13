@@ -3,13 +3,20 @@
 #include <string.h>
 #include "raylib.h"
 
-#define MAX_INGREDIENTS  50
-#define MAX_NORMAL_ITEMS 10
+#define MAX_INGREDIENTS  80
+#define NORMAL_MENU_COUNT 12
+#define MAX_NORMAL_CART_LINES 30
+#define BASE_COUNT 64
+#define TOPPING_COUNT 100
+#define BASE_CATS 6
+#define TOPPING_CATS 4
+#define PAGE_SIZE 10
 
 struct Ingredient {
     char name[60];
     int price;
     int ml;
+    int category;
 };
 
 struct NormalItem {
@@ -27,6 +34,10 @@ struct CupSize {
 struct NormalCartEntry {
     int id;
     int qty;
+    int ice;
+    int caffeine;
+    int whip;
+    int boba;
 };
 
 struct CartEntry {
@@ -35,131 +46,211 @@ struct CartEntry {
     int portions;
 };
 
-struct Ingredient baseIngredients[8];
-struct Ingredient toppingIngredients[21];
+struct Ingredient baseIngredients[BASE_COUNT] = {
+    {"Whole Milk", 30, 200, 0},
+    {"Skim Milk", 70, 200, 0},
+    {"Heavy Cream", 90, 200, 0},
+    {"Condensed Milk", 30, 20, 0},
+    {"Evaporated Milk", 90, 200, 0},
+    {"Buttermilk", 100, 200, 0},
+    {"Goat Milk", 80, 200, 0},
+    {"Buffalo Milk", 80, 200, 0},
+
+    {"Almond Milk", 150, 200, 1},
+    {"Oat Milk", 150, 200, 1},
+    {"Soy Milk", 150, 200, 1},
+    {"Coconut Milk", 150, 200, 1},
+    {"Rice Milk", 150, 200, 1},
+    {"Pistachio Milk", 150, 200, 1},
+    {"Cashew Milk", 150, 200, 1},
+    {"Macadamia Milk", 150, 200, 1},
+    {"Hazelnut Milk", 150, 200, 1},
+    {"Hemp Milk", 150, 200, 1},
+    {"Tiger Nut Milk", 150, 200, 1},
+
+    {"Chilled Water", 10, 200, 2},
+    {"Sparkling Water (Seltzer)", 15, 200, 2},
+    {"Club Soda", 15, 200, 2},
+    {"Tonic Water", 18, 200, 2},
+    {"Ginger Ale", 20, 200, 2},
+    {"Lemon-Lime Soda", 20, 200, 2},
+    {"Coconut Water", 25, 200, 2},
+    {"Maple Water", 35, 200, 2},
+    {"Cactus Water", 40, 200, 2},
+    {"Aloe Vera Juice", 30, 200, 2},
+
+    {"Green Tea", 12, 5, 3},
+    {"Black Tea", 12, 5, 3},
+    {"Oolong Tea", 15, 5, 3},
+    {"Matcha", 25, 5, 3},
+    {"White Tea", 20, 5, 3},
+    {"Yellow Tea", 22, 5, 3},
+    {"Earl Grey", 15, 5, 3},
+    {"Masala Chai", 18, 5, 3},
+    {"Milk Tea", 18, 5, 3},
+    {"Rooibos", 15, 5, 3},
+    {"Hibiscus Tea", 15, 5, 3},
+    {"Chamomile Tea", 15, 5, 3},
+    {"Peppermint Tea", 15, 5, 3},
+    {"Lemon Balm Tea", 15, 5, 3},
+    {"Butterfly Pea Flower Tea", 20, 5, 3},
+
+    {"Double Shot Espresso", 200, 60, 4},
+    {"Single Espresso", 200, 60, 4},
+    {"Americano", 180, 150, 4},
+    {"Cold Brew", 180, 100, 4},
+
+    {"Sugarcane Juice", 25, 200, 5},
+    {"Lemonade", 23, 200, 5},
+    {"Fresh Lime Juice", 23, 200, 5},
+    {"Orange Juice", 80, 200, 5},
+    {"Red Apple Juice", 80, 200, 5},
+    {"Green Apple Juice", 80, 200, 5},
+    {"Pomegranate Juice", 80, 200, 5},
+    {"White Grape Juice", 80, 200, 5},
+    {"Red Grape Juice", 80, 200, 5},
+    {"Cranberry Juice", 80, 200, 5},
+    {"Pineapple Juice", 80, 200, 5},
+    {"Mango Juice", 80, 200, 5},
+    {"Papaya Juice", 80, 200, 5},
+    {"Guava Juice", 80, 200, 5},
+    {"Passionfruit Juice", 80, 200, 5},
+    {"Watermelon Juice", 80, 200, 5}
+};
+
+struct Ingredient toppingIngredients[TOPPING_COUNT] = {
+    {"Mango", 38, 100, 0},
+    {"Banana", 35, 100, 0},
+    {"Pineapple", 38, 100, 0},
+    {"Canned Blueberry", 40, 100, 0},
+    {"Wild Blueberry", 55, 100, 0},
+    {"Papaya", 35, 100, 0},
+    {"Blackberry", 50, 100, 0},
+    {"Strawberry", 40, 100, 0},
+    {"Wild Strawberry", 52, 100, 0},
+    {"Raspberry", 48, 100, 0},
+    {"Black Raspberry", 52, 100, 0},
+    {"Golden Raspberry", 55, 100, 0},
+    {"Kiwi", 42, 100, 0},
+    {"Golden Kiwi", 50, 100, 0},
+    {"Peach", 42, 100, 0},
+    {"White Peach", 48, 100, 0},
+    {"Passionfruit", 50, 100, 0},
+    {"Dragonfruit (Red and White)", 52, 100, 0},
+    {"Watermelon", 35, 100, 0},
+    {"Guava", 38, 100, 0},
+    {"Pink Guava", 42, 100, 0},
+    {"Lychee", 45, 100, 0},
+    {"Green Apple", 38, 100, 0},
+    {"Red Apple", 38, 100, 0},
+    {"Cranberry", 45, 100, 0},
+    {"Gooseberry", 48, 100, 0},
+    {"Date", 40, 100, 0},
+    {"Jackfruit", 42, 100, 0},
+    {"Tamarind", 40, 100, 0},
+    {"Blood Orange", 48, 100, 0},
+    {"Tangerine", 42, 100, 0},
+    {"Grapefruit", 42, 100, 0},
+
+    {"Crushed Dark Chocolate (70%+)", 25, 50, 1},
+    {"Milk Chocolate Chips", 20, 50, 1},
+    {"White Chocolate Sauce", 22, 50, 1},
+    {"Raw Cocoa Powder", 18, 50, 1},
+    {"Dutch-Processed Cocoa Powder", 20, 50, 1},
+    {"Caramel Sauce", 18, 50, 1},
+    {"Salted Caramel", 20, 50, 1},
+    {"Butterscotch", 18, 50, 1},
+    {"Toffee", 18, 50, 1},
+    {"Peanut Butter", 20, 50, 1},
+    {"Creamy Almond Butter", 28, 50, 1},
+    {"Cashew Butter", 30, 50, 1},
+    {"Hazelnut Butter", 32, 50, 1},
+    {"Nutella", 25, 50, 1},
+    {"Cookie Butter (Biscoff)", 28, 50, 1},
+    {"Crushed Oreos", 20, 50, 1},
+    {"Graham Cracker Crumbs", 15, 50, 1},
+    {"Malted Milk Powder", 18, 50, 1},
+    {"Marshmallow Fluff", 18, 50, 1},
+    {"Condensed Milk Drizzle", 15, 50, 1},
+    {"Maple Syrup", 22, 50, 1},
+    {"Dark Molasses", 18, 50, 1},
+    {"Jaggery Syrup", 15, 50, 1},
+    {"Instant Coffee", 15, 50, 1},
+
+    {"Fresh Mint Leaves", 8, 5, 2},
+    {"Peppermint", 8, 5, 2},
+    {"Basil Seeds", 10, 5, 2},
+    {"Chia Seeds", 10, 5, 2},
+    {"Fresh Lemongrass", 10, 5, 2},
+    {"Crushed Fresh Ginger", 10, 5, 2},
+    {"Whole Green Cardamom", 12, 5, 2},
+    {"Black Cardamom", 15, 5, 2},
+    {"Cinnamon Sticks", 10, 5, 2},
+    {"Ground Cinnamon", 8, 5, 2},
+    {"Whole Cloves", 10, 5, 2},
+    {"Star Anise", 12, 5, 2},
+    {"Vanilla Bean Paste", 20, 5, 2},
+    {"Pure Vanilla Extract", 18, 5, 2},
+    {"Lavender Buds", 15, 5, 2},
+    {"Rose Water", 15, 5, 2},
+    {"Orange Blossom Water", 15, 5, 2},
+    {"Fresh Rosemary", 10, 5, 2},
+    {"Thyme Sprigs", 10, 5, 2},
+    {"Sage Leaves", 10, 5, 2},
+    {"Lemon Verbena", 12, 5, 2},
+    {"Crushed Pepper", 8, 5, 2},
+    {"Chili Flakes", 8, 5, 2},
+    {"Cayenne Pepper", 8, 5, 2},
+    {"Ground Turmeric", 8, 5, 2},
+    {"Fresh Sliced Turmeric Root", 10, 5, 2},
+    {"Allspice", 10, 5, 2},
+    {"Fennel Seeds", 8, 5, 2},
+    {"Coriander Seeds", 8, 5, 2},
+
+    {"Tapioca Boba Pearls (Black and Brown Sugar)", 50, 30, 3},
+    {"Crystal Boba", 52, 30, 3},
+    {"Popping Boba (Mango, Strawberry, Lychee)", 55, 30, 3},
+    {"Coconut Jelly (Nata de Coco)", 48, 30, 3},
+    {"Coffee Jelly", 50, 30, 3},
+    {"Aloe Vera Chunks", 50, 30, 3},
+    {"Grass Jelly", 48, 30, 3},
+    {"Red Bean Paste (Anko)", 52, 30, 3},
+    {"Mochi Pieces", 55, 30, 3},
+    {"Basil Seeds (Subja)", 42, 30, 3},
+    {"Chia Seeds (Gelatinous)", 42, 30, 3},
+    {"Aloe Vera Pulp", 48, 30, 3},
+    {"Seaweed Caviar (Agar Pearls)", 58, 30, 3},
+    {"Taro Chunks", 52, 30, 3},
+    {"Sweet Corn Kernels", 45, 30, 3}
+};
+
+int baseCatCount[BASE_CATS] = {8, 11, 10, 15, 4, 16};
+int baseCatStart[BASE_CATS] = {0, 8, 19, 29, 44, 48};
+const char *baseCatNames[BASE_CATS] = {
+    "Dairy Milks & Creams",
+    "Plant-Based & Nut Milks",
+    "Refreshing Waters & Hydrators",
+    "Teas & Botanical Infusions",
+    "Coffees & Caffeinated Brews",
+    "Acids, Juices, & Ferments"
+};
+
+int toppingCatCount[TOPPING_CATS] = {32, 24, 29, 15};
+int toppingCatStart[TOPPING_CATS] = {0, 32, 56, 85};
+const char *toppingCatNames[TOPPING_CATS] = {
+    "Fruits",
+    "Confectionery & Rich Profiles",
+    "Herbal, Botanical, Floral, & Spice Add-ins",
+    "Chewable, Viscous, & Textural Add-ins"
+};
+
 struct CupSize cupSizes[4];
-struct NormalItem normalMenu[10];
+struct NormalItem normalMenu[NORMAL_MENU_COUNT];
 struct CartEntry cart[MAX_INGREDIENTS];
 int cartSize = 0;
 Font customFont;
 
 void initData(void) {
-    strcpy(baseIngredients[0].name, "Sugarcane (200 ml)");
-    baseIngredients[0].price = 50;
-    baseIngredients[0].ml = 200;
-
-    strcpy(baseIngredients[1].name, "Lemonade (200 ml)");
-    baseIngredients[1].price = 60;
-    baseIngredients[1].ml = 200;
-
-    strcpy(baseIngredients[2].name, "Chilled Water (200 ml)");
-    baseIngredients[2].price = 0;
-    baseIngredients[2].ml = 200;
-
-    strcpy(baseIngredients[3].name, "Regular Milk (200 ml, normal)");
-    baseIngredients[3].price = 40;
-    baseIngredients[3].ml = 200;
-
-    strcpy(baseIngredients[4].name, "Regular Milk Chilled (200 ml)");
-    baseIngredients[4].price = 40;
-    baseIngredients[4].ml = 200;
-
-    strcpy(baseIngredients[5].name, "Crushed Ice Milk (200 ml)");
-    baseIngredients[5].price = 50;
-    baseIngredients[5].ml = 200;
-
-    strcpy(baseIngredients[6].name, "Coconut Water (200 ml)");
-    baseIngredients[6].price = 80;
-    baseIngredients[6].ml = 200;
-
-    strcpy(baseIngredients[7].name, "Double Shot Espresso (60 ml)");
-    baseIngredients[7].price = 200;
-    baseIngredients[7].ml = 60;
-
-    strcpy(toppingIngredients[0].name, "Mint");
-    toppingIngredients[0].price = 20;
-    toppingIngredients[0].ml = 10;
-
-    strcpy(toppingIngredients[1].name, "Instant Coffee (Nescafe Gold)");
-    toppingIngredients[1].price = 40;
-    toppingIngredients[1].ml = 10;
-
-    strcpy(toppingIngredients[2].name, "Ice");
-    toppingIngredients[2].price = 0;
-    toppingIngredients[2].ml = 50;
-
-    strcpy(toppingIngredients[3].name, "Basil Seed");
-    toppingIngredients[3].price = 10;
-    toppingIngredients[3].ml = 20;
-
-    strcpy(toppingIngredients[4].name, "Boba Pearls");
-    toppingIngredients[4].price = 60;
-    toppingIngredients[4].ml = 50;
-
-    strcpy(toppingIngredients[5].name, "Coconut Jelly");
-    toppingIngredients[5].price = 100;
-    toppingIngredients[5].ml = 50;
-
-    strcpy(toppingIngredients[6].name, "Coffee Jelly");
-    toppingIngredients[6].price = 100;
-    toppingIngredients[6].ml = 50;
-
-    strcpy(toppingIngredients[7].name, "Chocolate Syrup");
-    toppingIngredients[7].price = 30;
-    toppingIngredients[7].ml = 30;
-
-    strcpy(toppingIngredients[8].name, "Strawberry Syrup");
-    toppingIngredients[8].price = 30;
-    toppingIngredients[8].ml = 30;
-
-    strcpy(toppingIngredients[9].name, "Dark Chocolate (crushed)");
-    toppingIngredients[9].price = 80;
-    toppingIngredients[9].ml = 30;
-
-    strcpy(toppingIngredients[10].name, "Strawberry Jam");
-    toppingIngredients[10].price = 20;
-    toppingIngredients[10].ml = 20;
-
-    strcpy(toppingIngredients[11].name, "Crushed Ice Strawberry");
-    toppingIngredients[11].price = 50;
-    toppingIngredients[11].ml = 60;
-
-    strcpy(toppingIngredients[12].name, "Blended Pineapple");
-    toppingIngredients[12].price = 20;
-    toppingIngredients[12].ml = 80;
-
-    strcpy(toppingIngredients[13].name, "Apple Juice");
-    toppingIngredients[13].price = 30;
-    toppingIngredients[13].ml = 80;
-
-    strcpy(toppingIngredients[14].name, "Blended Mango");
-    toppingIngredients[14].price = 20;
-    toppingIngredients[14].ml = 80;
-
-    strcpy(toppingIngredients[15].name, "Blended Blueberry");
-    toppingIngredients[15].price = 80;
-    toppingIngredients[15].ml = 80;
-
-    strcpy(toppingIngredients[16].name, "Blended Banana");
-    toppingIngredients[16].price = 20;
-    toppingIngredients[16].ml = 80;
-
-    strcpy(toppingIngredients[17].name, "Chopped Banana");
-    toppingIngredients[17].price = 20;
-    toppingIngredients[17].ml = 40;
-
-    strcpy(toppingIngredients[18].name, "Chopped Mango");
-    toppingIngredients[18].price = 20;
-    toppingIngredients[18].ml = 40;
-
-    strcpy(toppingIngredients[19].name, "Chopped Apple");
-    toppingIngredients[19].price = 30;
-    toppingIngredients[19].ml = 40;
-
-    strcpy(toppingIngredients[20].name, "Papaya Juice");
-    toppingIngredients[20].price = 20;
-    toppingIngredients[20].ml = 80;
-
     strcpy(cupSizes[0].name, "Solo cup");
     cupSizes[0].ml = 60;
     cupSizes[0].index = 0;
@@ -215,6 +306,14 @@ void initData(void) {
     strcpy(normalMenu[9].name, "Papaya Paradise");
     strcpy(normalMenu[9].desc, "Fresh papaya juice with ice");
     normalMenu[9].price = 90;
+
+    strcpy(normalMenu[10].name, "Lemon Rizz");
+    strcpy(normalMenu[10].desc, "Premium zesty lemon refresher");
+    normalMenu[10].price = 320;
+
+    strcpy(normalMenu[11].name, "Moroccan Mint");
+    strcpy(normalMenu[11].desc, "Refreshing traditional mint blend");
+    normalMenu[11].price = 320;
 }
 
 void pauseAnyKey(void) {
@@ -224,38 +323,95 @@ void pauseAnyKey(void) {
     getchar();
 }
 
-int hasMilk(void) {
+int HasKeyword(const char *kw) {
     int i;
     for (i = 0; i < cartSize; i++) {
-        if (cart[i].isTopping == 0) {
-            if (strstr(baseIngredients[cart[i].index].name, "ilk") != NULL) {
-                return 1;
-            }
+        char *n = cart[i].isTopping ? toppingIngredients[cart[i].index].name : baseIngredients[cart[i].index].name;
+        if (strstr(n, kw) != NULL) {
+            return 1;
         }
     }
     return 0;
 }
 
-int hasEspresso(void) {
+int PortionsInCategory(int isTopping, int category) {
     int i;
+    int total = 0;
     for (i = 0; i < cartSize; i++) {
-        if (cart[i].isTopping == 0) {
-            if (strstr(baseIngredients[cart[i].index].name, "spresso") != NULL) {
-                return 1;
+        if (cart[i].isTopping == isTopping) {
+            int cat = isTopping ? toppingIngredients[cart[i].index].category : baseIngredients[cart[i].index].category;
+            if (cat == category) {
+                total = total + cart[i].portions;
             }
         }
     }
-    return 0;
+    return total;
 }
 
-int hasInstantCoffee(void) {
-    int i;
-    for (i = 0; i < cartSize; i++) {
-        if (cart[i].isTopping == 1) {
-            if (strstr(toppingIngredients[cart[i].index].name, "Instant") != NULL) {
-                return 1;
-            }
-        }
+int CheckEWWarning(char *outMsg) {
+    if ((HasKeyword("Lemonade") || HasKeyword("Lime")) && HasKeyword("Milk")) {
+        strcpy(outMsg, "Uh oh, your milk's about to have a mid-life curdle-sis!");
+        return 1;
+    }
+    if (HasKeyword("Pineapple") && (HasKeyword("Milk") || HasKeyword("Cream"))) {
+        strcpy(outMsg, "Pineapple's about to bully your milk into cottage cheese!");
+        return 1;
+    }
+    if (HasKeyword("Grapefruit") && (HasKeyword("Heavy Cream") || HasKeyword("Whole Milk") || HasKeyword("Condensed Milk"))) {
+        strcpy(outMsg, "Grapefruit and cream are NOT besties, this gets sour fast!");
+        return 1;
+    }
+    if ((HasKeyword("Matcha") || HasKeyword("Green Tea")) && (HasKeyword("Chocolate") || HasKeyword("Nutella"))) {
+        strcpy(outMsg, "Poor matcha never stood a chance against all that chocolate!");
+        return 1;
+    }
+    if ((HasKeyword("Mint") || HasKeyword("Peppermint")) && (HasKeyword("Mango") || HasKeyword("Papaya") || HasKeyword("Passionfruit"))) {
+        strcpy(outMsg, "Congrats, you just invented tropical toothpaste!");
+        return 1;
+    }
+    if (HasKeyword("Coconut Water") && (HasKeyword("Espresso") || HasKeyword("Milk"))) {
+        strcpy(outMsg, "That coconut water is about to have the worst day of its life!");
+        return 1;
+    }
+    if (HasKeyword("Sugarcane") && (HasKeyword("Chili") || HasKeyword("Cayenne"))) {
+        strcpy(outMsg, "Sweet sugarcane meets spicy chili - plot twist incoming!");
+        return 1;
+    }
+    if ((HasKeyword("Espresso") || HasKeyword("Coffee")) && HasKeyword("Watermelon")) {
+        strcpy(outMsg, "Your coffee and watermelon are fighting, and nobody wins!");
+        return 1;
+    }
+    if (HasKeyword("Matcha") && (HasKeyword("Lemon") || HasKeyword("Lime"))) {
+        strcpy(outMsg, "Say bye to that pretty green - matcha's going swamp-brown!");
+        return 1;
+    }
+    if (HasKeyword("Pepper") && (HasKeyword("Strawberry") || HasKeyword("Raspberry") || HasKeyword("Blueberry")) && HasKeyword("Milk")) {
+        strcpy(outMsg, "Pepper, berries, AND milk? Your throat's staging a protest!");
+        return 1;
+    }
+    if (HasKeyword("Grape Juice") && HasKeyword("Mint") && HasKeyword("Heavy Cream")) {
+        strcpy(outMsg, "Grape juice, mint, and cream walk into a cup... it ends badly!");
+        return 1;
+    }
+    if ((HasKeyword("Rosemary") || HasKeyword("Thyme") || HasKeyword("Sage")) && PortionsInCategory(1, 0) > 0) {
+        strcpy(outMsg, "Savory herbs in a fruity drink? Bold. Weird. Let's see it!");
+        return 1;
+    }
+    if (HasKeyword("Tonic") && HasKeyword("Heavy Cream")) {
+        strcpy(outMsg, "Tonic water and heavy cream are throwing a chalky little party!");
+        return 1;
+    }
+    if (HasKeyword("Jackfruit") && (HasKeyword("Soda") || HasKeyword("Sparkling") || HasKeyword("Club Soda"))) {
+        strcpy(outMsg, "That jackfruit is about to get REALLY loud with all those bubbles!");
+        return 1;
+    }
+    if (PortionsInCategory(1, 1) > 2) {
+        strcpy(outMsg, "Sugar rush incoming - hope you brought your dancing shoes!");
+        return 1;
+    }
+    if (PortionsInCategory(1, 2) > 2) {
+        strcpy(outMsg, "Can't wait to see your cheeks go red!");
+        return 1;
     }
     return 0;
 }
@@ -512,150 +668,8 @@ void DrawCupVisual(int cx, int topY, int height, int cupMl) {
     }
 }
 
-int chooseIngredient(struct Ingredient *list, int count, int isTopping, int budget, int cupMl, int skipMilkWarning) {
-    int choice;
-    int portions;
-    int i;
-    int remaining;
-    int remainingBudget;
-    int ok;
-    char marker[2];
-    int wc;
-    int merged;
-
-    remaining = cupMl - totalMl();
-    remainingBudget = budget - totalPrice();
-
-    printf("\n  Cup space: %d ml | Budget: %d Tk\n", remaining, remainingBudget);
-    printf("  Enter number (0 = back):\n\n");
-
-    for (i = 0; i < count; i++) {
-        if (list[i].price <= remainingBudget && list[i].ml <= remaining) {
-            ok = 1;
-            strcpy(marker, "+");
-        } else {
-            ok = 0;
-            strcpy(marker, "-");
-        }
-        printf("  %s %2d. %-34s %3d Tk  %d ml\n",
-               marker, i + 1, list[i].name, list[i].price, list[i].ml);
-    }
-
-    printf("\n  - = can't afford or won't fit\n  Choice: ");
-    scanf("%d", &choice);
-
-    if (choice == 0) {
-        return 0;
-    }
-
-    if (choice < 1 || choice > count) {
-        printf("  Invalid!\n");
-        pauseAnyKey();
-        return 0;
-    }
-
-    choice = choice - 1;
-
-    if (list[choice].price > remainingBudget) {
-        printf("  Not enough budget!\n");
-        pauseAnyKey();
-        return 0;
-    }
-
-    if (list[choice].ml > remaining) {
-        printf("  Not enough cup space!\n");
-        pauseAnyKey();
-        return 0;
-    }
-
-    printf("  How many portions? ");
-    scanf("%d", &portions);
-
-    if (portions < 1) {
-        printf("  Invalid.\n");
-        pauseAnyKey();
-        return 0;
-    }
-
-    if (list[choice].ml * portions > remaining) {
-        printf("  Too many for the cup!\n");
-        pauseAnyKey();
-        return 0;
-    }
-
-    if (list[choice].price * portions > remainingBudget) {
-        printf("  Too expensive!\n");
-        pauseAnyKey();
-        return 0;
-    }
-
-    if (skipMilkWarning == 0 && hasMilk() == 1) {
-        if (strstr(list[choice].name, "ineapple") != NULL) {
-            printf("  Are you sure? This may create stomach problems!\n");
-            printf("    1. Cancel\n    2. Proceed anyway\n  Choice: ");
-            scanf("%d", &wc);
-            if (wc != 2) {
-                printf("  Cancelled.\n");
-                pauseAnyKey();
-                return 0;
-            }
-        }
-    }
-
-    if (hasEspresso() == 1 && hasInstantCoffee() == 0) {
-        if (strstr(list[choice].name, "Instant") != NULL) {
-            printf("  Wow, can you handle the bitterness?\n");
-            printf("    1. Yes, I can!\n    2. No, cancel\n  Choice: ");
-            scanf("%d", &wc);
-            if (wc != 1) {
-                printf("  Cancelled.\n");
-                pauseAnyKey();
-                return 0;
-            }
-        }
-    }
-
-    if (hasInstantCoffee() == 1 && hasEspresso() == 0) {
-        if (strstr(list[choice].name, "spresso") != NULL) {
-            printf("  Wow, can you handle the bitterness?\n");
-            printf("    1. Yes, I can!\n    2. No, cancel\n  Choice: ");
-            scanf("%d", &wc);
-            if (wc != 1) {
-                printf("  Cancelled.\n");
-                pauseAnyKey();
-                return 0;
-            }
-        }
-    }
-
-    merged = 0;
-    for (i = 0; i < cartSize; i++) {
-        if (cart[i].isTopping == isTopping && cart[i].index == choice) {
-            cart[i].portions = cart[i].portions + portions;
-            printf("  Added %d more of %s\n", portions, list[choice].name);
-            pauseAnyKey();
-            return 1;
-        }
-    }
-
-    if (cartSize >= MAX_INGREDIENTS) {
-        printf("  Cart full!\n");
-        pauseAnyKey();
-        return 0;
-    }
-
-    cart[cartSize].index = choice;
-    cart[cartSize].isTopping = isTopping;
-    cart[cartSize].portions = portions;
-    cartSize = cartSize + 1;
-
-    printf("  Added %d portion(s) of %s\n", portions, list[choice].name);
-    pauseAnyKey();
-    return 1;
-}
-
 void showNormalMenu(void) {
-    struct NormalCartEntry cartNormal[MAX_NORMAL_ITEMS];
+    struct NormalCartEntry cartNormal[MAX_NORMAL_CART_LINES];
     int cartNCount = 0;
     int i, j, id, sub, total;
     int screen = 0;
@@ -664,6 +678,11 @@ void showNormalMenu(void) {
     int kbRow = 0;
     int lastScreen = -1;
     int fadeAlpha = 0;
+    int pendingDrinkId = 0;
+    int addIce = 0;
+    int addCaffeine = 0;
+    int addWhip = 0;
+    int addBoba = 0;
     char payName[10];
 
     Color bg = (Color){255, 240, 245, 255};
@@ -690,7 +709,7 @@ void showNormalMenu(void) {
 
         if (screen == 0) {
 
-            int leftLen = 10;
+            int leftLen = NORMAL_MENU_COUNT;
             int rightLen = cartNCount + 2;
             int mouseOverRow;
             int hoveredRow;
@@ -716,7 +735,7 @@ void showNormalMenu(void) {
 
             DrawTextExBold(customFont, "Normal Menu - pick a drink", (Vector2){20, 15}, 41, 1, titleColor);
 
-            for (i = 0; i < 10; i++) {
+            for (i = 0; i < NORMAL_MENU_COUNT; i++) {
                 Rectangle row = {20, 65 + i * 48, 620, 44};
                 char label[100];
 
@@ -724,22 +743,16 @@ void showNormalMenu(void) {
                 hoveredRow = mouseOverRow || (kbCol == 0 && kbRow == i);
 
                 sprintf(label, "%-28s %d Tk", normalMenu[i].name, normalMenu[i].price);
-                DrawMCButton(row, label, hoveredRow, 35);
+                DrawMCButton(row, label, hoveredRow, 26);
 
                 if ((mouseOverRow && clicked) || (kbCol == 0 && kbRow == i && enterPressed)) {
-                    int found = 0;
-                    for (j = 0; j < cartNCount; j++) {
-                        if (cartNormal[j].id == i) {
-                            cartNormal[j].qty = cartNormal[j].qty + 1;
-                            found = 1;
-                            break;
-                        }
-                    }
-                    if (!found && cartNCount < MAX_NORMAL_ITEMS) {
-                        cartNormal[cartNCount].id = i;
-                        cartNormal[cartNCount].qty = 1;
-                        cartNCount = cartNCount + 1;
-                    }
+                    pendingDrinkId = i;
+                    addIce = 0;
+                    addCaffeine = 0;
+                    addWhip = 0;
+                    addBoba = 0;
+                    screen = 3;
+                    kbIndex = 0;
                 }
             }
 
@@ -747,17 +760,26 @@ void showNormalMenu(void) {
             total = 0;
 
             for (i = 0; i < cartNCount; i++) {
-                char line[100];
-                Rectangle minusBtn = {920, 58 + i * 36, 46, 32};
+                char line[120];
+                char tags[40];
+                Rectangle minusBtn = {920, 58 + i * 44, 46, 32};
                 int mouseOverMinus = CheckCollisionPointRec(mouse, minusBtn);
                 int hoveredMinus = mouseOverMinus || (kbCol == 1 && kbRow == i);
+                int unitPrice;
 
                 id = cartNormal[i].id;
-                sub = normalMenu[id].price * cartNormal[i].qty;
+                unitPrice = normalMenu[id].price;
+                tags[0] = '\0';
+                if (cartNormal[i].ice) { unitPrice += 30; strcat(tags, "+Ice "); }
+                if (cartNormal[i].caffeine) { unitPrice += 60; strcat(tags, "+Caf "); }
+                if (cartNormal[i].whip) { unitPrice += 90; strcat(tags, "+Whip "); }
+                if (cartNormal[i].boba) { unitPrice += 100; strcat(tags, "+Boba "); }
+
+                sub = unitPrice * cartNormal[i].qty;
                 total = total + sub;
 
-                sprintf(line, "%dx %s = %d Tk", cartNormal[i].qty, normalMenu[id].name, sub);
-                DrawTextExBold(customFont, line, (Vector2){680, 60 + i * 36}, 22, 1, textColor);
+                sprintf(line, "%dx %s %s= %d Tk", cartNormal[i].qty, normalMenu[id].name, tags, sub);
+                DrawTextExBold(customFont, line, (Vector2){680, 60 + i * 44}, 18, 1, textColor);
 
                 DrawMCButton(minusBtn, "-", hoveredMinus, 31);
 
@@ -797,6 +819,72 @@ void showNormalMenu(void) {
                     EndDrawing();
                     return;
                 }
+            }
+
+        } else if (screen == 3) {
+
+            Rectangle iceBtn   = {325, 220, 400, 65};
+            Rectangle cafBtn   = {325, 295, 400, 65};
+            Rectangle whipBtn  = {325, 370, 400, 65};
+            Rectangle bobaBtn  = {325, 445, 400, 65};
+            Rectangle confirmBtn = {325, 550, 400, 70};
+
+            int mouseOverIce = CheckCollisionPointRec(mouse, iceBtn);
+            int mouseOverCaf = CheckCollisionPointRec(mouse, cafBtn);
+            int mouseOverWhip = CheckCollisionPointRec(mouse, whipBtn);
+            int mouseOverBoba = CheckCollisionPointRec(mouse, bobaBtn);
+            int mouseOverConfirm = CheckCollisionPointRec(mouse, confirmBtn);
+
+            char hd[100];
+            Vector2 hdSize;
+            char iceLbl[60], cafLbl[60], whipLbl[60], bobaLbl[60];
+
+            if (downPressed || rightPressed) kbIndex = (kbIndex + 1) % 5;
+            if (upPressed || leftPressed) kbIndex = (kbIndex - 1 + 5) % 5;
+
+            sprintf(hd, "Add-ons for %s?", normalMenu[pendingDrinkId].name);
+            hdSize = MeasureTextEx(customFont, hd, 34, 1);
+            DrawTextExBold(customFont, hd, (Vector2){(1050 - hdSize.x) / 2, 130}, 34, 1, titleColor);
+
+            sprintf(iceLbl, "[%s] Extra Ice (+30 Tk)", addIce ? "x" : " ");
+            sprintf(cafLbl, "[%s] Caffeine (+60 Tk)", addCaffeine ? "x" : " ");
+            sprintf(whipLbl, "[%s] Whipped Cream (+90 Tk)", addWhip ? "x" : " ");
+            sprintf(bobaLbl, "[%s] Boba (+100 Tk)", addBoba ? "x" : " ");
+
+            DrawMCButton(iceBtn, iceLbl, mouseOverIce || kbIndex == 0, 24);
+            DrawMCButton(cafBtn, cafLbl, mouseOverCaf || kbIndex == 1, 24);
+            DrawMCButton(whipBtn, whipLbl, mouseOverWhip || kbIndex == 2, 24);
+            DrawMCButton(bobaBtn, bobaLbl, mouseOverBoba || kbIndex == 3, 24);
+            DrawMCButton(confirmBtn, "Confirm", mouseOverConfirm || kbIndex == 4, 28);
+
+            if ((mouseOverIce && clicked) || (kbIndex == 0 && enterPressed)) addIce = !addIce;
+            if ((mouseOverCaf && clicked) || (kbIndex == 1 && enterPressed)) addCaffeine = !addCaffeine;
+            if ((mouseOverWhip && clicked) || (kbIndex == 2 && enterPressed)) addWhip = !addWhip;
+            if ((mouseOverBoba && clicked) || (kbIndex == 3 && enterPressed)) addBoba = !addBoba;
+
+            if ((mouseOverConfirm && clicked) || (kbIndex == 4 && enterPressed)) {
+                int found = 0;
+                for (j = 0; j < cartNCount; j++) {
+                    if (cartNormal[j].id == pendingDrinkId &&
+                        cartNormal[j].ice == addIce &&
+                        cartNormal[j].caffeine == addCaffeine &&
+                        cartNormal[j].whip == addWhip &&
+                        cartNormal[j].boba == addBoba) {
+                        cartNormal[j].qty = cartNormal[j].qty + 1;
+                        found = 1;
+                        break;
+                    }
+                }
+                if (!found && cartNCount < MAX_NORMAL_CART_LINES) {
+                    cartNormal[cartNCount].id = pendingDrinkId;
+                    cartNormal[cartNCount].qty = 1;
+                    cartNormal[cartNCount].ice = addIce;
+                    cartNormal[cartNCount].caffeine = addCaffeine;
+                    cartNormal[cartNCount].whip = addWhip;
+                    cartNormal[cartNCount].boba = addBoba;
+                    cartNCount = cartNCount + 1;
+                }
+                screen = 0;
             }
 
         } else if (screen == 1) {
@@ -843,7 +931,12 @@ void showNormalMenu(void) {
             total = 0;
             for (i = 0; i < cartNCount; i++) {
                 id = cartNormal[i].id;
-                total = total + normalMenu[id].price * cartNormal[i].qty;
+                int unitPrice = normalMenu[id].price;
+                if (cartNormal[i].ice) unitPrice += 30;
+                if (cartNormal[i].caffeine) unitPrice += 60;
+                if (cartNormal[i].whip) unitPrice += 90;
+                if (cartNormal[i].boba) unitPrice += 100;
+                total = total + unitPrice * cartNormal[i].qty;
             }
 
             DrawTextExBold(customFont, "Yay! Can't wait for the drink! ^_^", (Vector2){190, 210}, 38, 1, titleColor);
@@ -880,10 +973,12 @@ void showCustomMenu(void) {
     int i, j;
     int screen;
     int toppingPage;
+    int currentCat;
     int pendingIsTopping;
     int pendingIndex;
     int pendingPortions;
     int warningType;
+    char warningMsg[150];
     int kbIndex;
     int kbCol;
     int kbRow;
@@ -901,6 +996,7 @@ void showCustomMenu(void) {
     cupMl = 0;
     screen = 0;
     toppingPage = 0;
+    currentCat = 0;
     numBuffer[0] = '\0';
     warningType = 0;
     kbIndex = 0;
@@ -1032,24 +1128,19 @@ void showCustomMenu(void) {
                             screen = pendingIsTopping ? 4 : 3;
                             kbIndex = 0;
                         } else {
-                            warningType = 0;
-                            if (pendingIsTopping) {
-                                if (hasMilk() && strstr(ch->name, "ineapple") != NULL) {
-                                    warningType = 1;
-                                } else if (hasEspresso() && strstr(ch->name, "Instant") != NULL) {
-                                    warningType = 2;
-                                } else if (hasInstantCoffee() && strstr(ch->name, "spresso") != NULL) {
-                                    warningType = 3;
-                                }
-                            } else {
-                                if (hasMilk() && strstr(ch->name, "ineapple") != NULL) {
-                                    warningType = 1;
-                                } else if (hasEspresso() && !hasInstantCoffee() && strstr(ch->name, "Instant") != NULL) {
-                                    warningType = 2;
-                                } else if (hasInstantCoffee() && !hasEspresso() && strstr(ch->name, "spresso") != NULL) {
-                                    warningType = 3;
-                                }
+                            int hasWarn = 0;
+
+                            if (cartSize < MAX_INGREDIENTS) {
+                                cart[cartSize].index = pendingIndex;
+                                cart[cartSize].isTopping = pendingIsTopping;
+                                cart[cartSize].portions = portions;
+                                cartSize = cartSize + 1;
+
+                                hasWarn = CheckEWWarning(warningMsg);
+
+                                cartSize = cartSize - 1;
                             }
+                            warningType = hasWarn;
 
                             if (warningType != 0) {
                                 screen = 6;
@@ -1175,21 +1266,12 @@ void showCustomMenu(void) {
                 DrawMCButton(cancelBtn, "Cancel", hoveredCancel, 31);
 
                 if ((mouseOverAddBase && clicked) || (kbRow == 0 && kbCol == 0 && enterPressed)) {
-                    pendingList = baseIngredients;
-                    pendingIsTopping = 0;
-                    screen = 3;
+                    screen = 10;
                     kbIndex = 0;
-                    kbCol = 0;
-                    kbRow = 0;
                 }
                 if ((mouseOverAddTop && clicked) || (kbRow == 0 && kbCol == 1 && enterPressed)) {
-                    pendingList = toppingIngredients;
-                    pendingIsTopping = 1;
-                    toppingPage = 0;
-                    screen = 4;
+                    screen = 11;
                     kbIndex = 0;
-                    kbCol = 0;
-                    kbRow = 0;
                 }
                 if ((mouseOverUndo && clicked) || (kbRow == 1 && enterPressed)) {
                     if (cartSize > 0) {
@@ -1211,33 +1293,68 @@ void showCustomMenu(void) {
                 }
             }
 
-        } else if (screen == 3 || screen == 4) {
+        } else if (screen == 10 || screen == 11) {
 
-            int listStart;
-            int listEnd;
-            int isTop = (screen == 4);
-            struct Ingredient *list = isTop ? toppingIngredients : baseIngredients;
+            int isTop = (screen == 11);
+            int catCount = isTop ? TOPPING_CATS : BASE_CATS;
+            int slots = catCount + 1;
+            const char **names = isTop ? toppingCatNames : baseCatNames;
+
+            if (downPressed || rightPressed) kbIndex = (kbIndex + 1) % slots;
+            if (upPressed || leftPressed) kbIndex = (kbIndex - 1 + slots) % slots;
+
+            {
+                const char *hd = isTop ? "Pick a Topping Category" : "Pick a Base Category";
+                Vector2 hdSize = MeasureTextEx(customFont, hd, 34, 1);
+                DrawTextExBold(customFont, hd, (Vector2){(1050 - hdSize.x) / 2, 40}, 34, 1, titleColor);
+            }
+
+            for (i = 0; i < catCount; i++) {
+                Rectangle r = {175, 110 + i * 75, 700, 62};
+                int mouseOver = CheckCollisionPointRec(mouse, r);
+                int hovered = mouseOver || kbIndex == i;
+                DrawMCButton(r, names[i], hovered, 26);
+                if ((mouseOver && clicked) || (kbIndex == i && enterPressed)) {
+                    pendingIsTopping = isTop;
+                    pendingList = isTop ? toppingIngredients : baseIngredients;
+                    currentCat = i;
+                    toppingPage = 0;
+                    screen = 3;
+                    kbCol = 0;
+                    kbRow = 0;
+                }
+            }
+
+            {
+                Rectangle backBtn = {345, 110 + catCount * 75 + 10, 360, 60};
+                int mouseOverBack = CheckCollisionPointRec(mouse, backBtn);
+                int backSlot = catCount;
+                DrawMCButton(backBtn, "Back", mouseOverBack || kbIndex == backSlot, 26);
+                if ((mouseOverBack && clicked) || (kbIndex == backSlot && enterPressed)) {
+                    screen = 2;
+                    kbIndex = 0;
+                }
+            }
+
+        } else if (screen == 3) {
+
+            int isTop = pendingIsTopping;
+            struct Ingredient *list = pendingList;
+            int catCount = isTop ? toppingCatCount[currentCat] : baseCatCount[currentCat];
+            int catStart = isTop ? toppingCatStart[currentCat] : baseCatStart[currentCat];
+            int totalPages = (catCount + PAGE_SIZE - 1) / PAGE_SIZE;
+            int listStart = catStart + toppingPage * PAGE_SIZE;
+            int listEnd = listStart + PAGE_SIZE;
             int remaining = cupMl - totalMl();
             int remainingBudget = budget - totalPrice();
             int rowCount;
             int sideLen;
-            char hd[80];
+            char hd[100];
 
-            if (isTop) {
-                if (toppingPage == 0) {
-                    listStart = 0;
-                    listEnd = 11;
-                } else {
-                    listStart = 11;
-                    listEnd = 21;
-                }
-            } else {
-                listStart = 0;
-                listEnd = 8;
-            }
+            if (listEnd > catStart + catCount) listEnd = catStart + catCount;
 
             rowCount = listEnd - listStart;
-            sideLen = (isTop ? 2 : 0) + 1;
+            sideLen = (totalPages > 1 ? 2 : 0) + 1;
 
             if (kbCol == 0 && kbRow >= rowCount) kbRow = rowCount - 1;
             if (kbCol == 1 && kbRow >= sideLen) kbRow = sideLen - 1;
@@ -1283,10 +1400,12 @@ void showCustomMenu(void) {
                 }
             }
 
-            sprintf(hd, "%s - Space:%dml Budget:%dTk", isTop ? "Toppings" : "Base Ingredients", remaining, remainingBudget);
+            sprintf(hd, "%s - Page %d/%d - Space:%dml Budget:%dTk",
+                isTop ? toppingCatNames[currentCat] : baseCatNames[currentCat],
+                toppingPage + 1, totalPages, remaining, remainingBudget);
             {
-                Vector2 hdSize = MeasureTextEx(customFont, hd, 31, 1);
-                DrawTextExBold(customFont, hd, (Vector2){(1050 - hdSize.x) / 2, 15}, 31, 1, titleColor);
+                Vector2 hdSize = MeasureTextEx(customFont, hd, 24, 1);
+                DrawTextExBold(customFont, hd, (Vector2){(1050 - hdSize.x) / 2, 15}, 24, 1, titleColor);
             }
 
             for (i = listStart; i < listEnd; i++) {
@@ -1299,14 +1418,12 @@ void showCustomMenu(void) {
                 sprintf(lbl, "%s  %d Tk  %d ml", list[i].name, list[i].price, list[i].ml);
 
                 if (afford) {
-                    DrawMCButton(r, lbl, hovered, 29);
+                    DrawMCButton(r, lbl, hovered, 22);
                 } else {
-                    DrawMCButtonDisabled(r, lbl, 29);
+                    DrawMCButtonDisabled(r, lbl, 22);
                 }
 
                 if (afford && ((mouseOver && clicked) || (kbCol == 0 && kbRow == slotIdx && enterPressed))) {
-                    pendingList = list;
-                    pendingIsTopping = isTop;
                     pendingIndex = i;
                     numBuffer[0] = '\0';
                     screen = 5;
@@ -1314,21 +1431,21 @@ void showCustomMenu(void) {
                 }
             }
 
-            if (isTop) {
+            if (totalPages > 1) {
                 Rectangle prevBtn = {800, 60, 130, 50};
                 Rectangle nextBtn = {800, 120, 130, 50};
                 int mouseOverPrev = CheckCollisionPointRec(mouse, prevBtn);
                 int mouseOverNext = CheckCollisionPointRec(mouse, nextBtn);
 
-                DrawMCButton(prevBtn, "Prev", mouseOverPrev || (kbCol == 1 && kbRow == 0), 29);
-                DrawMCButton(nextBtn, "Next", mouseOverNext || (kbCol == 1 && kbRow == 1), 29);
+                DrawMCButton(prevBtn, "Prev", mouseOverPrev || (kbCol == 1 && kbRow == 0), 22);
+                DrawMCButton(nextBtn, "Next", mouseOverNext || (kbCol == 1 && kbRow == 1), 22);
 
                 if ((mouseOverPrev && clicked) || (kbCol == 1 && kbRow == 0 && enterPressed)) {
-                    toppingPage = 0;
+                    toppingPage = (toppingPage - 1 + totalPages) % totalPages;
                     kbRow = 0;
                 }
                 if ((mouseOverNext && clicked) || (kbCol == 1 && kbRow == 1 && enterPressed)) {
-                    toppingPage = 1;
+                    toppingPage = (toppingPage + 1) % totalPages;
                     kbRow = 0;
                 }
             }
@@ -1337,9 +1454,9 @@ void showCustomMenu(void) {
                 Rectangle backBtn = {800, 590, 170, 60};
                 int mouseOverBack = CheckCollisionPointRec(mouse, backBtn);
                 int backRow = sideLen - 1;
-                DrawMCButton(backBtn, "Back", mouseOverBack || (kbCol == 1 && kbRow == backRow), 31);
+                DrawMCButton(backBtn, "Back", mouseOverBack || (kbCol == 1 && kbRow == backRow), 24);
                 if ((mouseOverBack && clicked) || (kbCol == 1 && kbRow == backRow && enterPressed)) {
-                    screen = 2;
+                    screen = isTop ? 11 : 10;
                     kbIndex = 0;
                     kbCol = 0;
                     kbRow = 0;
@@ -1348,27 +1465,21 @@ void showCustomMenu(void) {
 
         } else if (screen == 6) {
 
-            char msg[100];
-            Rectangle yesBtn = {230, 320, 240, 75};
-            Rectangle noBtn  = {530, 320, 240, 75};
+            Rectangle yesBtn = {200, 320, 280, 75};
+            Rectangle noBtn  = {560, 320, 280, 75};
             int mouseOverYes = CheckCollisionPointRec(mouse, yesBtn);
             int mouseOverNo = CheckCollisionPointRec(mouse, noBtn);
 
             if (rightPressed) kbIndex = (kbIndex + 1) % 2;
             if (leftPressed) kbIndex = (kbIndex - 1 + 2) % 2;
 
-            if (warningType == 1) {
-                strcpy(msg, "Are you sure? This may create stomach problems!");
-            } else {
-                strcpy(msg, "Wow, can you handle the bitterness?");
-            }
             {
-                Vector2 msgSize = MeasureTextEx(customFont, msg, 40, 1);
-                DrawTextExBold(customFont, msg, (Vector2){(1050 - msgSize.x) / 2, 200}, 40, 1, titleColor);
+                Vector2 msgSize = MeasureTextEx(customFont, warningMsg, 32, 1);
+                DrawTextExBold(customFont, warningMsg, (Vector2){(1050 - msgSize.x) / 2, 200}, 32, 1, titleColor);
             }
 
-            DrawMCButton(yesBtn, warningType == 1 ? "Proceed anyway" : "Yes, I can!", mouseOverYes || kbIndex == 0, 31);
-            DrawMCButton(noBtn, warningType == 1 ? "Cancel" : "No, cancel", mouseOverNo || kbIndex == 1, 31);
+            DrawMCButton(yesBtn, "Proceed anyway", mouseOverYes || kbIndex == 0, 26);
+            DrawMCButton(noBtn, "No, cancel", mouseOverNo || kbIndex == 1, 26);
 
             if ((mouseOverYes && clicked) || (kbIndex == 0 && enterPressed)) {
                 int merged = 0;
